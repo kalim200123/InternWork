@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 사이드바 -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="user-profile" id="profile-trigger">
+            <div class="profile-icon"><i class="fas fa-user"></i></div>
+            <div class="profile-info">
+              <div class="user-name" id="user-name">게스트</div>
+              <div class="user-email" id="user-email">로그인 필요</div>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+
+          <!-- 드롭다운 -->
+          <div id="profile-menu" class="dropdown">
+            <button id="account-btn">내 계정</button>
+            <button id="settings-btn">설정</button>
+            <button id="logout-btn">로그아웃</button>
+          </div>
+          <!--로그인 모달-->
+          <div id="login-modal" class="modal">
+            <div class="modal-content auth">
+              <h3>로그인</h3>
+              <form id="login-form">
+                <label for="login-username" class="sr-only">아이디</label>
+                <input id="login-username" type="text" placeholder="아이디" autocomplete="username" />
+
+                <label for="login-password" class="sr-only">비밀번호</label>
+                <input id="login-password" type="password" placeholder="비밀번호" autocomplete="current-password" />
+
+                <div class="modal-actions">
+                  <button id="login-submit" type="button">로그인</button>
+                  <button id="login-cancel" type="button">취소</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div id="register-modal" class="modal">
+            <div class="modal-content auth">
+              <h3>회원가입</h3>
+              <input id="reg-username" type="text" placeholder="아이디" />
+              <input id="reg-name" type="text" placeholder="이름" />
+              <input id="reg-password" type="password" placeholder="비밀번호" />
+              <input id="reg-email" type="email" placeholder="이메일 (선택)" />
+              <div class="modal-actions">
+                <button id="register-submit">가입</button>
+                <button id="register-cancel">취소</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <!--검색창-->
+          <i class="fas fa-search"></i>
+          <input id="search-input" type="text" placeholder="검색" />
+        </div>
+
+        <div class="sidebar-menu">
+          <!--기본 카테고리-->
+          <div class="menu-item active" data-category="todolist">
+            <i class="fas fa-list"></i>
+            <span class="menu-text">Todo List</span>
+            <span class="count" id="todolist-count">0</span>
+          </div>
+          <div class="menu-item" data-category="important">
+            <i class="fas fa-star"></i>
+            <span class="menu-text">중요</span>
+            <span class="count" id="important-count">0</span>
+          </div>
+          <div class="menu-item" data-category="today">
+            <i class="fas fa-user"></i>
+            <span class="menu-text">오늘 할 일</span>
+            <span class="count" id="today-count">0</span>
+          </div>
+        </div>
+
+        <!--완료된 일 맨 아래 위치 고정-->
+        <div class="sidebar-completed">
+          <div class="menu-item" data-category="completed">
+            <i class="fas fa-check-circle"></i>
+            <span class="menu-text">완료된 일</span>
+            <span class="count" id="completed-count">0</span>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="new-list-btn" id="new-list-btn" type="button">
+            <i class="fas fa-plus"></i>
+            새 목록
+          </button>
+        </div>
+      </div>
+
+      <!-- 메인 콘텐츠 -->
+      <div class="main-content">
+        <div class="content-header">
+          <div class="header-left">
+            <h1 id="category-title">Todo List</h1>
+            <div class="date-info" id="date-info"></div>
+          </div>
+          <div class="header-right">
+            <i class="fas fa-image"></i>
+            <i class="fas fa-lightbulb"></i>
+            <i class="fa-solid fa-clipboard-question"></i>
+          </div>
+        </div>
+
+        <div class="content-body">
+          <div class="task-list" id="task-list">
+            <!--할 일들이 여기에 동적으로 추가됨-->
+          </div>
+
+          <div class="add-task-form">
+            <form id="add-task-form" class="task-input-container">
+              <i class="fas fa-circle"></i>
+              <input type="text" name="add" id="task-input" placeholder="할 일 추가" maxlength="50" required />
+
+              <!--날짜 입력창-->
+              <input type="text" id="due-date" placeholder="날짜 선택" style="display: none" />
+
+              <!-- 달력 아이콘 (form submit 방지) -->
+              <i class="fa-solid fa-calendar-days fa-lg" id="calendar-icon" style="cursor: pointer"></i>
+
+              <!-- 할 일 추가 버튼 -->
+              <button type="submit" class="add-btn">
+                <i class="fas fa-plus"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const FIXED_CATS = [
+        { key: "todolist", icon: "fas fa-list", label: "Todo List" },
+        { key: "important", icon: "fas fa-star", label: "중요", virtual: true },
+        { key: "today", icon: "fas fa-user", label: "오늘 할 일" },
+      ];
+
+      let CURRENT_USER = null;
+
+      async function fetchJSON(url, opts = {}) {
+        const res = await fetch(url, { credentials: "include", ...opts });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status} ${text}`);
+        }
+        return res.json();
+      }
+      // "YYYY-MM-DD"를 로컬 기준 Date로 파싱
+      function parseYMDLocal(ymd) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+        if (!m) return new Date(ymd); // ISO 등 다른 형식은 기본 파서에 맡김
+        const [, y, mo, d] = m.map(Number);
+        return new Date(y, mo - 1, d); // 로컬 자정
+      }
+
+      // D-Day 라벨 계산 (오늘= D-DAY, 내일= D-1, 지남= D+N)
+      function getDDayLabel(dueDateStr) {
+        if (!dueDateStr) return "";
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // 오늘 00:00
+
+        const due = parseYMDLocal(dueDateStr);
+        due.setHours(0, 0, 0, 0); // 마감일 00:00(로컬)
+
+        const diffDays = Math.floor((due - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return "D-DAY";
+        return diffDays > 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`;
+      }
+
+      // 앱 시작 시 유저 상태 체크
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const { user } = await fetchJSON("/auth/me", { method: "GET" });
+          CURRENT_USER = user;
+          refreshProfileUI();
+          await loadTodos(); // 로그인 됐으면 해당 유저의 할 일 로드
+        } catch (e) {
+          console.warn("me 실패", e);
+          refreshProfileUI();
+        }
+
+        // 로그인 모달 이벤트
+        document.getElementById("login-submit")?.addEventListener("click", doLogin);
+        document.getElementById("open-register")?.addEventListener("click", () => {
+          show("#login-modal", false);
+          show("#register-modal", true);
+        });
+        document.getElementById("login-cancel")?.addEventListener("click", () => show("#login-modal", false));
+
+        // 회원가입 모달 이벤트
+        document.getElementById("register-submit")?.addEventListener("click", doRegister);
+        document.getElementById("register-cancel")?.addEventListener("click", () => show("#register-modal", false));
+      });
+
+      //모달 열고 닫기
+      function show(sel, open = true) {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        open ? el.classList.add("open") : el.classList.remove("open");
+      }
+
+      function refreshProfileUI() {
+        const nameEl = document.getElementById("user-name");
+        const emailEl = document.getElementById("user-email");
+        if (CURRENT_USER) {
+          nameEl.textContent = CURRENT_USER.name || CURRENT_USER.username;
+          emailEl.textContent = CURRENT_USER.username;
+        } else {
+          nameEl.textContent = "게스트";
+          emailEl.textContent = "로그인 필요";
+        }
+        renderProfileMenu();
+      }
+
+      function renderProfileMenu() {
+        const menu = document.getElementById("profile-menu");
+        if (!menu) return;
+
+        if (!CURRENT_USER) {
+          menu.classList.add("dropdown");
+          menu.innerHTML = `
+              <div class="dropdown-item" id="open-login">
+                <i class="fa-solid fa-right-to-bracket"></i> 로그인
+              </div>
+              <div class="dropdown-item" id="open-register">
+                <i class="fa-regular fa-user"></i> 회원가입
+              </div>
+            `;
+          menu.querySelector("#open-login").onclick = () => {
+            show("#login-modal", true);
+            // 혹시 열려있으면 회원가입 모달 닫기
+            show("#register-modal", false);
+          };
+          menu.querySelector("#open-register").onclick = () => {
+            show("#login-modal", false);
+            show("#register-modal", true);
+          };
+          return;
+        }
+
+        //로그인 상태
+        menu.classList.add("dropdown");
+        const initials = (CURRENT_USER.name || CURRENT_USER.username || "?").slice(0, 1).toUpperCase();
+        menu.innerHTML = `
+            <div class="dropdown-header">
+              <div class="avatar">${initials}</div>
+              <div>
+                <div style="font-weight:600">${CURRENT_USER.name || CURRENT_USER.username}</div>
+                <div style="font-size:12px;color:#6b7280">${CURRENT_USER.username}</div>
+              </div>
+            </div>
+            <div class="dropdown-item" id="account-btn"><i class="fa-regular fa-id-card"></i> 내 계정</div>
+            <div class="dropdown-item" id="settings-btn"><i class="fa-solid fa-gear"></i> 설정</div>
+            <div class="dropdown-item logout" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃</div>
+          `;
+
+        // 로그아웃
+        menu.querySelector("#logout-btn").onclick = async () => {
+          try {
+            await fetchJSON("/auth/logout", { method: "POST" });
+            CURRENT_USER = null;
+            todos = {};
+            renderSidebarMenu();
+            updateCounts();
+            updateTaskList();
+            refreshProfileUI(); // 메뉴/프로필 갱신
+          } catch {
+            alert("로그아웃 실패");
+          }
+        };
+      }
+
+      //로그인 실행 함수
+      async function doLogin() {
+        try {
+          const username = document.getElementById("login-username").value.trim();
+          const password = document.getElementById("login-password").value;
+          if (!username || !password) return alert("아이디/비밀번호를 입력해 주세요");
+
+          const { user } = await fetchJSON("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include", // ← include (오타 금지)
+            body: JSON.stringify({ username, password }),
+          });
+
+          CURRENT_USER = user;
+          show("#login-modal", false);
+          refreshProfileUI();
+          await loadTodos();
+          document.getElementById("profile-menu")?.classList.remove("open");
+        } catch (err) {
+          console.error("[login] fail:", err);
+          alert("로그인 실패");
+        }
+      }
+
+      async function doRegister() {
+        const username = document.getElementById("reg-username").value.trim();
+        const name = document.getElementById("reg-name").value.trim();
+        const password = document.getElementById("reg-password").value;
+        const email = document.getElementById("reg-email")?.value.trim() || null;
+        if (!username || !password) return alert("아이디/비밀번호를 입력해 주세요");
+
+        try {
+          const { user } = await fetchJSON("/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, name, password, email }),
+          });
+          CURRENT_USER = user;
+          show("#register-modal", false);
+          refreshProfileUI();
+          await loadTodos();
+        } catch (e) {
+          alert("회원가입 실패");
+        }
+      }
+
+      //할 일 추가 기능
+      document.querySelector(".add-task-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const addInput = document.querySelector('input[name="add"]');
+        const dateInput = document.getElementById("due-date");
+
+        const taskText = addInput.value.trim();
+        const dueDate = dateInput.value;
+
+        if (taskText === "") return;
+
+        const res = await fetch("/addTask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ add: taskText, category: currentCategory, dueDate }),
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          console.error("addTask failed:", res.status, err);
+          alert("추가 실패: " + err);
+          return;
+        }
+
+        todos = await res.json();
+        addInput.value = "";
+        dateInput.value = "";
+        updateTaskList();
+        updateCounts();
+        showAddAlert();
+      });
+
+      async function toggleCompleteById(id) {
+        const res = await fetch("/toggleComplete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id }),
+        });
+        todos = await res.json();
+        updateTaskList();
+        updateCounts();
+      }
+
+      async function toggleImportantById(id) {
+        const res = await fetch("/toggleImportant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id }),
+        });
+        todos = await res.json();
+        updateTaskList();
+        updateCounts();
+      }
+
+      async function deleteTaskById(id) {
+        const res = await fetch("/deleteTask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id }),
+        });
+        todos = await res.json();
+        updateTaskList();
+        updateCounts();
+        showDeleteAlert();
+      }
+
+      async function editTaskById(id) {
+        const newText = prompt("할 일을 수정하세요:");
+        if (!newText || !newText.trim()) return;
+
+        const res = await fetch("/editTask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id, newText }),
+        });
+        todos = await res.json();
+        updateTaskList();
+        updateCounts();
+        showEditAlert();
+      }
+
+      //카테고리 이름과 아이콘
+      function getCategoryDisplayName(category) {
+        const names = {
+          todolist: "Todo List",
+          important: "중요",
+          today: "오늘 할 일",
+          completed: "완료된 일",
+        };
+        return names[category] || category.replace(/-/g, " ");
+      }
+
+      function getCategoryIcon(category) {
+        const icons = {
+          todolist: "fas fa-list",
+          important: "fas fa-star",
+          today: "fas fa-user",
+        };
+        return icons[category] || "far fa-circle";
+      }
+      let todos = {};
+      let currentCategory = "todolist";
+
+      async function loadTodos() {
+        try {
+          const res = await fetchJSON("/api/todos"); // 세션으로 유저 식별
+          todos = res;
+        } catch (e) {
+          console.warn("목록 로드 실패(아마 비로그인):", e.message);
+          todos = {}; // 비로그인일 땐 빈 목록
+        }
+        renderSidebarMenu();
+        updateCounts();
+        updateTaskList();
+      }
+
+      //할 일 목록 업데이트
+      function updateTaskList(filtered = null) {
+        const taskList = document.getElementById("task-list");
+        let currentTodos = [];
+
+        if (currentCategory === "important") {
+          currentTodos = filtered ?? [];
+          if (!filtered) {
+            for (const cat in todos) {
+              todos[cat].forEach((todo, idx) => {
+                if (todo.important) {
+                  currentTodos.push({ ...todo, category: cat, idx });
+                }
+              });
+            }
+          }
+        } else if (currentCategory === "completed") {
+          currentTodos = filtered ?? [];
+          if (!filtered) {
+            for (const cat in todos) {
+              todos[cat].forEach((todo, idx) => {
+                if (todo.completed) {
+                  currentTodos.push({ ...todo, category: cat, idx });
+                }
+              });
+            }
+          }
+        } else {
+          const categoryTodos = filtered ?? todos[currentCategory] ?? [];
+          currentTodos = categoryTodos.map((todo, idx) => ({ ...todo, category: currentCategory, idx }));
+        }
+
+        taskList.innerHTML = "";
+        if (currentTodos.length === 0) {
+          taskList.innerHTML = '<div class="empty-state">할 일이 없습니다.</div>';
+          return;
+        }
+
+        currentTodos.forEach((todo) => {
+          const taskItem = document.createElement("div");
+          taskItem.className = "task-item";
+
+          //D-DAY 계산
+          const ddayText = getDDayLabel(todo.dueDate);
+
+          taskItem.innerHTML = `
+             <div class="task-checkbox">
+               <input type="checkbox"
+                 onchange="toggleCompleteById(${todo.id})"
+                 ${todo.completed ? "checked" : ""}>
+             </div>
+             <div class="task-content">
+               <span class="task-text ${todo.completed && currentCategory !== "completed" ? "completed" : ""}">
+                 ${todo.text}
+               </span>
+               <span class="task-category">
+                 ${todo.category?.toUpperCase() || ""} ${ddayText ? `<span class="due-date">${ddayText}</span>` : ""}
+               </span>
+             </div>
+             <div class="task-actions">
+               <button onclick="toggleImportantById(${todo.id})" class="star-btn ${todo.important ? "starred" : ""}">
+                 <i class="fas fa-star"></i>
+               </button>
+               <button onclick="editTaskById(${todo.id})" class="edit-btn">
+                 <i class="fas fa-pen"></i>
+               </button>
+               <button type="button" class="delete-btn" onclick="deleteTaskById(${todo.id})">
+                 <i class="fas fa-trash"></i>
+               </button>
+             </div>
+            `;
+          taskList.appendChild(taskItem);
+        });
+
+        function findCategoryOfTask(todo) {
+          for (const cat in todos) {
+            if (todos[cat].includes(todo)) {
+              return cat;
+            }
+          }
+          return currentCategory; // fallback
+        }
+      }
+
+      //사이드바 목록 생성
+      function renderSidebarMenu() {
+        const sidebarMenu = document.querySelector(".sidebar-menu");
+        sidebarMenu.innerHTML = "";
+
+        // 1) 고정 카테고리
+        for (const { key, icon, label } of FIXED_CATS) {
+          const item = document.createElement("div");
+          item.className = "menu-item" + (currentCategory === key ? " active" : "");
+          item.dataset.category = key;
+          item.innerHTML = `
+        <i class="${icon}"></i>
+        <span class="menu-text">${label}</span>
+        <span class="count" id="${key}-count">0</span>
+      `;
+          item.addEventListener("click", () => changeCategory(key));
+          sidebarMenu.appendChild(item);
+        }
+
+        // 2) 사용자 정의 카테고리 (고정/가상 제외)
+        const fixedKeys = new Set(FIXED_CATS.map((f) => f.key).concat(["completed"]));
+        Object.keys(todos)
+          .filter((cat) => !fixedKeys.has(cat))
+          .sort()
+          .forEach((cat) => {
+            const item = document.createElement("div");
+            item.className = "menu-item" + (currentCategory === cat ? " active" : "");
+            item.dataset.category = cat;
+            item.innerHTML = `
+          <i class="far fa-circle"></i>
+          <span class="menu-text">${cat.replace(/-/g, " ")}</span>
+          <span class="count" id="${cat}-count">${(todos[cat] || []).length}</span>
+        `;
+            item.addEventListener("click", () => changeCategory(cat));
+            sidebarMenu.appendChild(item);
+          });
+      }
+
+      function updateCounts() {
+        // 중요(가상)
+        const importantCount = Object.values(todos)
+          .flat()
+          .filter((t) => t.important).length;
+        const importantElem = document.getElementById("important-count");
+        if (importantElem) importantElem.textContent = importantCount;
+
+        // 완료(가상)
+        const completedCount = Object.values(todos)
+          .flat()
+          .filter((t) => t.completed).length;
+        const completedElem = document.getElementById("completed-count");
+        if (completedElem) completedElem.textContent = completedCount;
+
+        // 실제 고정 카테고리
+        for (const cat of ["todolist", "today"]) {
+          const el = document.getElementById(`${cat}-count`);
+          if (el) el.textContent = (todos[cat] || []).length;
+        }
+
+        // 사용자 정의 카테고리
+        const fixedKeys = new Set(["todolist", "important", "today", "completed"]);
+        for (const cat of Object.keys(todos)) {
+          if (fixedKeys.has(cat)) continue;
+          const el = document.getElementById(`${cat}-count`);
+          if (el) el.textContent = (todos[cat] || []).length;
+        }
+      }
+
+      //카테고리 전환
+      function changeCategory(category) {
+        currentCategory = category;
+        document.getElementById("category-title").textContent = getCategoryDisplayName(category);
+
+        //사이드바 active 표시
+        document.querySelectorAll(".menu-item").forEach((item) => item.classList.remove("active"));
+        document.querySelector(`[data-category="${category}"]`)?.classList.add("active");
+
+        //오늘 할 일 카테고리면 날짜 표시
+        const dateInfo = document.getElementById("date-info");
+        if (category === "today") {
+          const now = new Date();
+          const options = { month: "long", day: "numeric", weekday: "long" };
+          dateInfo.textContent = now.toLocaleDateString("ko-KR", options);
+        } else {
+          dateInfo.textContent = "";
+        }
+
+        updateTaskList();
+        toggleAddTaskFormVisibility();
+      }
+
+      //새 카테고리 버튼
+      document.getElementById("new-list-btn").addEventListener("click", async function () {
+        const listName = prompt("새 목록 이름을 입력하세요:");
+        if (!listName || listName.trim() === "") return;
+
+        const newCategory = listName.trim().toLowerCase().replace(/\s+/g, "-");
+
+        try {
+          await fetch("/addCategory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ category: newCategory }),
+          });
+
+          todos[newCategory] = [];
+
+          //UI에 새 카테고리 추가
+          const sidebarMenu = document.querySelector(".sidebar-menu");
+          const newItem = document.createElement("div");
+          newItem.className = "menu-item";
+          newItem.dataset.category = newCategory;
+          newItem.innerHTML = `
+                    <i class="far fa-circle"></i>
+                    <span class="menu-text">${listName}</span>
+                    <span class="count" id="${newCategory}-count">0</span>
+                  `;
+          sidebarMenu.appendChild(newItem);
+
+          newItem.addEventListener("click", () => changeCategory(newCategory));
+          changeCategory(newCategory);
+        } catch (err) {
+          console.error("카테고리 추가 실패", err);
+        }
+      });
+
+      //DOMContentLoaded
+      document.addEventListener("DOMContentLoaded", function () {
+        loadTodos();
+
+        const helpIcon = document.querySelector(".fa-clipboard-question");
+        const helpModal = document.getElementById("help-modal");
+        const closeBtn = document.querySelector(".close-btn");
+        const closeHelpBtn = document.getElementById("close-help");
+
+        if (helpIcon && helpModal && closeBtn) {
+          helpIcon.addEventListener("click", () => (helpModal.style.display = "block"));
+          closeBtn.addEventListener("click", () => (helpModal.style.display = "none"));
+          closeHelpBtn.addEventListener("click", () => (helpModal.style.display = "none"));
+          window.addEventListener("click", (e) => {
+            if (e.target === helpModal) helpModal.style.display = "none";
+          });
+        }
+
+        // Flatpickr 초기화
+        const calendar = flatpickr("#due-date", {
+          dateFormat: "Y-m-d",
+          minDate: "today",
+          clickOpens: false,
+        });
+
+        // 아이콘 클릭 시 캘린더 열기
+        document.getElementById("calendar-icon").addEventListener("click", () => {
+          calendar.open();
+        });
+
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          item.addEventListener("click", function () {
+            changeCategory(this.getAttribute("data-category"));
+          });
+        });
+
+        document.getElementById("search-input").addEventListener("input", function () {
+          const keyword = this.value.toLowerCase();
+          let list = [];
+
+          if (currentCategory === "important") {
+            for (const cat in todos) {
+              (todos[cat] || []).forEach((todo) => {
+                if (todo.important) list.push({ ...todo, category: cat });
+              });
+            }
+          } else if (currentCategory === "completed") {
+            for (const cat in todos) {
+              (todos[cat] || []).forEach((todo) => {
+                if (todo.completed) list.push({ ...todo, category: cat });
+              });
+            }
+          } else {
+            list = (todos[currentCategory] || []).map((todo) => ({ ...todo, category: currentCategory }));
+          }
+
+          const filteredTodos = list.filter((todo) => (todo.text || "").toLowerCase().includes(keyword));
+          updateTaskList(filteredTodos);
+        });
+
+        //할 일 추가 폼에 hidden input으로 category 넣기
+        document.querySelector(".add-task-form form").addEventListener("submit", function () {
+          let hiddenCat = this.querySelector('input[name="category"]');
+          if (!hiddenCat) {
+            hiddenCat = document.createElement("input");
+            hiddenCat.type = "hidden";
+            hiddenCat.name = "category";
+            this.appendChild(hiddenCat);
+          }
+          hiddenCat.value = currentCategory;
+        });
+      });
+      //form 가시화
+      function toggleAddTaskFormVisibility() {
+        const form = document.querySelector(".add-task-form");
+        if (currentCategory === "completed" || currentCategory === "important") {
+          form.style.display = "none";
+        } else {
+          form.style.display = "block";
+        }
+      }
+      function showEditAlert() {
+        const alertBox = document.getElementById("edit-alert");
+        alertBox.style.display = "block";
+        setTimeout(() => {
+          alertBox.style.display = "none";
+        }, 2000);
+      }
+      function showAddAlert() {
+        const alertBox = document.getElementById("add-alert");
+        alertBox.style.display = "block";
+        setTimeout(() => {
+          alertBox.style.display = "none";
+        }, 2000);
+      }
+      function showDeleteAlert() {
+        const alertBox = document.getElementById("delete-alert");
+        alertBox.style.display = "block";
+        setTimeout(() => {
+          alertBox.style.display = "none";
+        }, 2000);
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const trigger = document.getElementById("profile-trigger");
+        const menu = document.getElementById("profile-menu");
+        if (!trigger || !menu) return;
+
+        // 중복 바인딩 방지
+        if (trigger.dataset.bound) return;
+        trigger.dataset.bound = "1";
+
+        // 트리거 클릭: 열릴 때만 메뉴 렌더(로그인/로그아웃 상태 반영)
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!menu.classList.contains("open")) {
+            if (typeof renderProfileMenu === "function") renderProfileMenu();
+          }
+          menu.classList.toggle("open");
+        });
+
+        // 바깥을 클릭하면 닫기
+        document.addEventListener("click", (e) => {
+          if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+            menu.classList.remove("open");
+          }
+        });
+      });
+    </script>
+    <!-- 도움말 모달 -->
+    <div id="help-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+
+        <div class="modal-header">
+          <i class="fa-solid fa-clipboard-question"></i>
+          <h2>Todo List 사용 가이드</h2>
+        </div>
+
+        <div class="modal-body">
+          <p>이 Todo List는 당신의 하루를 효율적으로 관리할 수 있도록 설계되었습니다. 아래 기능을 참고하세요!</p>
+          <ul>
+            <li><b>Todo List</b> – 전체 할 일을 관리합니다.</li>
+            <li><b>중요</b> – 별표를 눌러 중요한 일을 모아둡니다.</li>
+            <li><b>오늘 할 일</b> – 오늘 해야 할 일을 날짜와 함께 확인합니다.</li>
+            <li><b>새 목록</b> – 직접 만든 목록에 원하는 일을 넣을 수 있습니다.</li>
+            <li>
+              <b>완료된 일</b> – 완료 표시한 항목이 자동으로 모이며, 중앙선 없이 깔끔하게 표시됩니다. 이 목록에서는 직접
+              추가나 삭제는 할 수 없습니다.
+            </li>
+            <li>할 일을 클릭하면 완료 표시, 휴지통 아이콘으로 삭제 가능합니다.</li>
+          </ul>
+        </div>
+
+        <div class="modal-footer">
+          <button id="close-help" class="btn-primary">확인</button>
+        </div>
+      </div>
+    </div>
+    <!-- 수정 알림 -->
+    <div id="edit-alert" class="alert">수정 완료!</div>
+    <!-- 추가 알림 -->
+    <div id="add-alert" class="alert">추가 완료!</div>
+    <!-- 삭제 알림 -->
+    <div id="delete-alert" class="alert">삭제 완료!</div>
+  </body>
+</html>

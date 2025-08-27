@@ -1,0 +1,99 @@
+{
+  "todolist": [
+    {
+      "text": "Todo List 만들기",
+      "completed": false,
+      "important": true,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "검색 기능 추가하기",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "새 목록 기능 추가하기",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "도움말 기능 추가하기",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "완료된 일 활성화하기",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "유효성 검사 기능 추가하기",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "상단 오른쪽 이미지, 전구 기능 변경하기",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "할 일 수정하기",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "기한 설정 & 남은 일 수 표시",
+      "completed": true,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "드래그 앤 드롭 설정하기",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "로그인 & 개인화  설정하기",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "상단 우측 정렬하기 추가",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    }
+  ],
+  "important": [
+    {
+      "text": "todo list",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    },
+    {
+      "text": "완료된 일 활성화하기",
+      "completed": false,
+      "important": false,
+      "date": "2025-08-07"
+    }
+  ],
+  "today": [
+    {
+      "text": "할 일 수정하기",
+      "completed": false,
+      "important": true,
+      "date": "2025-08-07"
+    }
+  ],
+  "sample1": []
+}
